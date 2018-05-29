@@ -14,6 +14,16 @@ namespace Avalonia.Win32.WGL
             throw new NotImplementedException();
         }
 
+        public (int x, int y) GetDpi()
+        {
+            throw new NotImplementedException();
+        }
+
+        public FramebufferParameters GetFramebufferParameters()
+        {
+            throw new NotImplementedException();
+        }
+
         public (int width, int height) GetSize()
         {
             throw new NotImplementedException();

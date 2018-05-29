@@ -59,7 +59,12 @@ namespace Avalonia.Win32.EGL
             var surface = Natives.CreateWindowSurface(this.display, this.configId, hwnd.Handle, attributes);
 
             // TODO: Make the GL version configurable
-            return new EglContext(this.display, new EglSurface(surface, hwnd), this.CreateContext(3, 0));
+            return new EglContext(
+                this.display,
+                this.configId,
+                new EglSurface(surface, hwnd), 
+                this.CreateContext(3, 0)
+            );
         }
 
         private static EglApi BindAPI(int eglMajor, int eglMinor, GlRequest request)

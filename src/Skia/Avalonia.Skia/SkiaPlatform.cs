@@ -43,5 +43,7 @@ namespace Avalonia.Skia
                 throw new NotImplementedException();
             }
         }
+
+        public static Vector DefaultDpi => new Vector(96.0f, 96.0f);
     }
 }

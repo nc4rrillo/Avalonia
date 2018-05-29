@@ -1,142 +1,92 @@
+// Copyright (c) The Avalonia Project. All rights reserved.
+// Licensed under the MIT license. See licence.md file in the project root for full license information.
+
 using System;
 using System.IO;
 using Avalonia.Platform;
-using Avalonia.Rendering;
+using Avalonia.Skia.Helpers;
 using SkiaSharp;
 
 namespace Avalonia.Skia
 {
-    class BitmapImpl : IRenderTargetBitmapImpl, IWriteableBitmapImpl
+    /// <summary>
+    /// Immutable Skia bitmap.
+    /// </summary>
+    public class ImmutableBitmap : IDrawableBitmapImpl
     {
-        private Vector _dpi;
+        private readonly SKImage _image;
 
-        public SKBitmap Bitmap { get; private set; }
-
-        public BitmapImpl(SKBitmap bm)
+        /// <summary>
+        /// Create immutable bitmap from given stream.
+        /// </summary>
+        /// <param name="stream">Stream containing encoded data.</param>
+        public ImmutableBitmap(Stream stream)
         {
-            Bitmap = bm;
-            PixelHeight = bm.Height;
-            PixelWidth = bm.Width;
-            _dpi = new Vector(96, 96);
-        }
-
-        static void ReleaseProc(IntPtr address, object ctx)
-        {
-            ((IUnmanagedBlob) ctx).Dispose();
-        }
-
-        private static readonly SKBitmapReleaseDelegate ReleaseDelegate = ReleaseProc;
-        
-        public BitmapImpl(int width, int height, Vector dpi, PixelFormat? fmt = null)
-        {
-            PixelHeight = height;
-            PixelWidth = width;
-            _dpi = dpi;
-            var colorType = fmt?.ToSkColorType() ?? SKImageInfo.PlatformColorType;
-            var runtimePlatform = AvaloniaLocator.Current?.GetService<IRuntimePlatform>();
-            var runtime = runtimePlatform?.GetRuntimeInfo();
-            if (runtime?.IsDesktop == true && runtime?.OperatingSystem == OperatingSystemType.Linux)
-                colorType = SKColorType.Bgra8888;
-
-            if (runtimePlatform != null)
+            using (var skiaStream = new SKManagedStream(stream))
             {
-                Bitmap = new SKBitmap();
-                var nfo = new SKImageInfo(width, height, colorType, SKAlphaType.Premul);
-                var plat = AvaloniaLocator.Current.GetService<IRuntimePlatform>();
-                var blob = plat.AllocBlob(nfo.BytesSize);
-                Bitmap.InstallPixels(nfo, blob.Address, nfo.RowBytes, null, ReleaseDelegate, blob);
-                
+                _image = SKImage.FromEncodedData(SKData.Create(skiaStream));
+
+                if (_image == null)
+                {
+                    throw new ArgumentException("Unable to load bitmap from provided data");
+                }
+
+                PixelWidth = _image.Width;
+                PixelHeight = _image.Height;
             }
-            else 
-                Bitmap =  new SKBitmap(width, height, colorType, SKAlphaType.Premul);
-            Bitmap.Erase(SKColor.Empty);
         }
 
+        /// <summary>
+        /// Create immutable bitmap from given pixel data copy.
+        /// </summary>
+        /// <param name="width">Width of data pixels.</param>
+        /// <param name="height">Height of data pixels.</param>
+        /// <param name="stride">Stride of data pixels.</param>
+        /// <param name="format">Format of data pixels.</param>
+        /// <param name="data">Data pixels.</param>
+        public ImmutableBitmap(int width, int height, int stride, PixelFormat format, IntPtr data)
+        {
+            var imageInfo = new SKImageInfo(width, height, format.ToSkColorType(), SKAlphaType.Premul);
+
+            _image = SKImage.FromPixelCopy(imageInfo, data, stride);
+
+            if (_image == null)
+            {
+                throw new ArgumentException("Unable to create bitmap from provided data");
+            }
+
+            PixelWidth = width;
+            PixelHeight = height;
+        }
+
+        /// <inheritdoc />
+        public int PixelWidth { get; }
+
+        /// <inheritdoc />
+        public int PixelHeight { get; }
+
+        /// <inheritdoc />
         public void Dispose()
         {
-            Bitmap.Dispose();
+            _image.Dispose();
         }
 
-        public int PixelWidth { get; private set; }
-        public int PixelHeight { get; private set; }
-
-        class BitmapDrawingContext : DrawingContextImpl
-        {
-            private readonly SKSurface _surface;
-
-            public BitmapDrawingContext(SKBitmap bitmap, Vector dpi, IVisualBrushRenderer visualBrushRenderer)
-                : this(CreateSurface(bitmap), dpi, visualBrushRenderer)
-            {
-                CanUseLcdRendering = false;
-            }
-
-            private static SKSurface CreateSurface(SKBitmap bitmap)
-            {
-                IntPtr length;
-                var rv =  SKSurface.Create(bitmap.Info, bitmap.GetPixels(out length), bitmap.RowBytes);
-                if (rv == null)
-                    throw new Exception("Unable to create Skia surface");
-                return rv;
-            }
-
-            public BitmapDrawingContext(SKSurface surface, Vector dpi, IVisualBrushRenderer visualBrushRenderer)
-                : base(surface.Canvas, dpi, visualBrushRenderer)
-            {
-                _surface = surface;
-            }
-
-            public override void Dispose()
-            {
-                base.Dispose();
-                _surface.Dispose();
-            }
-        }
-
-        public IDrawingContextImpl CreateDrawingContext(IVisualBrushRenderer visualBrushRenderer)
-        {
-            return new BitmapDrawingContext(Bitmap, _dpi, visualBrushRenderer);
-        }
-
-        public void Save(Stream stream)
-        {
-            IntPtr length;
-            using (var image = SKImage.FromPixels(Bitmap.Info, Bitmap.GetPixels(out length), Bitmap.RowBytes))
-            using (var data = image.Encode())
-            {
-                data.SaveTo(stream);
-            }
-        }
-
+        /// <inheritdoc />
         public void Save(string fileName)
         {
-            using (var stream = File.Create(fileName))
-                Save(stream);
+            ImageSavingHelper.SaveImage(_image, fileName);
         }
 
-        class BitmapFramebuffer : ILockedFramebuffer
+        /// <inheritdoc />
+        public void Save(Stream stream)
         {
-            private SKBitmap _bmp;
-
-            public BitmapFramebuffer(SKBitmap bmp)
-            {
-                _bmp = bmp;
-                _bmp.LockPixels();
-            }
-
-            public void Dispose()
-            {
-                _bmp.UnlockPixels();
-                _bmp = null;
-            }
-
-            public IntPtr Address => _bmp.GetPixels();
-            public int Width => _bmp.Width;
-            public int Height => _bmp.Height;
-            public int RowBytes => _bmp.RowBytes;
-            public Vector Dpi { get; } = new Vector(96, 96);
-            public PixelFormat Format => _bmp.ColorType.ToPixelFormat();
+            ImageSavingHelper.SaveImage(_image, stream);
         }
 
-        public ILockedFramebuffer Lock() => new BitmapFramebuffer(Bitmap);
+        /// <inheritdoc />
+        public void Draw(DrawingContextImpl context, SKRect sourceRect, SKRect destRect, SKPaint paint)
+        {
+            context.Canvas.DrawImage(_image, sourceRect, destRect, paint);
+        }
     }
 }

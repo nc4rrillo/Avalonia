@@ -28,6 +28,11 @@ namespace Avalonia.Win32.WGL
             throw new NotImplementedException();
         }
 
+        public void RecreateSurface()
+        {
+            throw new NotImplementedException();
+        }
+
         public void SwapBuffers()
         {
             throw new NotImplementedException();

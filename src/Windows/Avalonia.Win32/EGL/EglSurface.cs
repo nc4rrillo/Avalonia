@@ -10,7 +10,7 @@ namespace Avalonia.Win32.EGL
     public class EglSurface : IGlSurface, IDisposable
     {
         public IntPtr SurfaceHandle { get; }
-        public IPlatformHandle PlatformHandle { get; }
+        public IPlatformHandle PlatformHandle { get; set; }
 
         public EglSurface(IntPtr surfaceHandle, IPlatformHandle platformHandle)
         {
@@ -22,11 +22,48 @@ namespace Avalonia.Win32.EGL
         {
             UnmanagedMethods.GetClientRect(PlatformHandle.Handle, out UnmanagedMethods.RECT clientSize);
 
-            return (clientSize.right - clientSize.left, clientSize.bottom - clientSize.top);
+            var width = clientSize.right - clientSize.left;
+            var height = clientSize.bottom - clientSize.top;
+
+            return (width, height);
         }
 
         public void Dispose()
         {
+        }
+
+        /// <inheritdoc />
+        public (int x, int y) GetDpi()
+        {
+            if (UnmanagedMethods.ShCoreAvailable)
+            {
+                var monitor = UnmanagedMethods.MonitorFromWindow(
+                    PlatformHandle.Handle,
+                    UnmanagedMethods.MONITOR.MONITOR_DEFAULTTONEAREST);
+
+                if (UnmanagedMethods.GetDpiForMonitor(
+                        monitor,
+                        UnmanagedMethods.MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI,
+                        out var dpix,
+                        out var dpiy) == 0)
+                {
+                    return ((int)dpix, (int)dpiy);
+                }
+            }
+
+            return (96, 96);
+        }
+
+        /// <inheritdoc />
+        public FramebufferParameters GetFramebufferParameters()
+        {
+            GL.GetIntegerv(GL.FRAMEBUFFER_BINDING, out int framebufferHandle);
+            return new FramebufferParameters
+            {
+                FramebufferHandle = (IntPtr)framebufferHandle,
+                SampleCount = 0,
+                StencilBits = 0
+            };
         }
     }
 }

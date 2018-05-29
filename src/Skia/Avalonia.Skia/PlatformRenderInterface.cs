@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Avalonia.Controls.Platform.Surfaces;
 using Avalonia.Media;
+using Avalonia.OpenGL;
 using Avalonia.Platform;
 using SkiaSharp;
 
@@ -32,22 +33,13 @@ namespace Avalonia.Skia
             return new StreamGeometryImpl();
         }
 
-        public IBitmapImpl LoadBitmap(System.IO.Stream stream)
+        /// <inheritdoc />
+        public IBitmapImpl LoadBitmap(Stream stream)
         {
-            using (var s = new SKManagedStream(stream))
-            {
-                var bitmap = SKBitmap.Decode(s);
-                if (bitmap != null)
-                {
-                    return new BitmapImpl(bitmap);
-                }
-                else
-                {
-                    throw new ArgumentException("Unable to load bitmap from provided data");
-                }
-            }
+            return new ImmutableBitmap(stream);
         }
 
+        /// <inheritdoc />
         public IBitmapImpl LoadBitmap(string fileName)
         {
             using (var stream = File.OpenRead(fileName))
@@ -56,16 +48,13 @@ namespace Avalonia.Skia
             }
         }
 
+        /// <inheritdoc />
         public IBitmapImpl LoadBitmap(PixelFormat format, IntPtr data, int width, int height, int stride)
         {
-            using (var tmp = new SKBitmap())
-            {
-                tmp.InstallPixels(new SKImageInfo(width, height, format.ToSkColorType(), SKAlphaType.Premul)
-                    , data, stride);
-                return new BitmapImpl(tmp.Copy());
-            }
+            return new ImmutableBitmap(width, height, stride, format, data);
         }
 
+        /// <inheritdoc />
         public IRenderTargetBitmapImpl CreateRenderTargetBitmap(
             int width,
             int height,
@@ -73,24 +62,61 @@ namespace Avalonia.Skia
             double dpiY)
         {
             if (width < 1)
+            {
                 throw new ArgumentException("Width can't be less than 1", nameof(width));
-            if (height < 1)
-                throw new ArgumentException("Height can't be less than 1", nameof(height));
+            }
 
-            return new BitmapImpl(width, height, new Vector(dpiX, dpiY));
+            if (height < 1)
+            {
+                throw new ArgumentException("Height can't be less than 1", nameof(height));
+            }
+
+            var dpi = new Vector(dpiX, dpiY);
+
+            /*
+            var createInfo = new SurfaceRenderTarget.CreateInfo
+            {
+                Width = width,
+                Height = height,
+                Dpi = dpi,
+                RenderContext = HasGpuSupport ? _renderBackend.CreateOffscreenRenderContext() : null,
+                DisableTextLcdRendering = !HasGpuSupport
+            };
+
+            return new SurfaceRenderTarget(createInfo);*/
+
+            throw new NotImplementedException();
         }
 
         public virtual IRenderTarget CreateRenderTarget(IEnumerable<object> surfaces)
         {
-            var fb = surfaces?.OfType<IFramebufferPlatformSurface>().FirstOrDefault();
-            if (fb == null)
-                throw new Exception("Skia backend currently only supports framebuffer render target");
-            return new FramebufferRenderTarget(fb);
+            foreach (var surface in surfaces)
+            {
+                if (true)
+                {
+                    var contextBuilder = AvaloniaLocator.Current.GetService<Func<GlRequest, IGlContextBuilder>>();
+                    var context = contextBuilder(GlRequest.Auto).Build(surfaces);
+                    context.MakeCurrent();
+
+                    GL.Initialize((name) => context.GetProcAddress(name));
+                    var grContext = GRContext.Create(GRBackend.OpenGL, GRGlInterface.AssembleInterface((o, name) => context.GetProcAddress(name)), GRContextOptions.Default);
+                    return new WindowRenderTarget(context, grContext);
+                }
+                else
+                {
+                    if (surface is IFramebufferPlatformSurface framebufferSurface)
+                    {
+                        return new FramebufferRenderTarget(framebufferSurface);
+                    }
+                }
+            }
+
+            throw new NotSupportedException("Don't know how to create a Skia render target from any of provided surfaces");
         }
 
         public IWriteableBitmapImpl CreateWriteableBitmap(int width, int height, PixelFormat? format = null)
         {
-            return new BitmapImpl(width, height, new Vector(96, 96), format);
+            return new WriteableBitmapImpl(width, height, format);
         }
     }
 }

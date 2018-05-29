@@ -23,5 +23,7 @@ namespace Avalonia.OpenGL
 
         /// <returns>True if this Context is the current one. False otherwise.</returns>
         bool IsCurrentContext();
+
+        void RecreateSurface();
     }
 }
