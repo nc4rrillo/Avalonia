@@ -64,7 +64,7 @@ namespace Avalonia.Win32.EGL
 
         private static EglApi BindAPI(int eglMajor, int eglMinor, GlRequest request)
         {
-            // EGL defaults to OPENGL_ES for eglBindAPI. 
+            // EGL defaults to OPENGL_ES for eglBindAPI.
             var eglApi = EglApi.Gles;
 
             //If we have EGL >= 1.4, we can try desktop GL if our GlRequest is set to Auto
