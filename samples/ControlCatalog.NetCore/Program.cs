@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Avalonia;
 
@@ -27,7 +26,7 @@ namespace ControlCatalog.NetCore
                 AppBuilder.Configure<App>().InitializeWithLinuxFramebuffer(tl =>
                 {
                     tl.Content = new MainView();
-                    System.Threading.ThreadPool.QueueUserWorkItem(_ => ConsoleSilencer());
+                    ThreadPool.QueueUserWorkItem(_ => ConsoleSilencer());
                 });
             else
                 BuildAvaloniaApp().Start<MainWindow>();
@@ -37,7 +36,7 @@ namespace ControlCatalog.NetCore
         /// This method is needed for IDE previewer infrastructure
         /// </summary>
         public static AppBuilder BuildAvaloniaApp()
-            => AppBuilder.Configure<App>().UsePlatformDetect().UseReactiveUI();
+            => AppBuilder.Configure<App>().UseWin32(false, true).UseWebRender().UseReactiveUI();
 
         static void ConsoleSilencer()
         {

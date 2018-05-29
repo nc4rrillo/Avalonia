@@ -4,6 +4,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="AvaloniaUI.Win32.Natives" Version="0.0.1" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\Avalonia.Animation\Avalonia.Animation.csproj" />
     <ProjectReference Include="..\..\Avalonia.Base\Avalonia.Base.csproj" />
     <ProjectReference Include="..\..\Avalonia.Controls\Avalonia.Controls.csproj" />
@@ -12,6 +15,7 @@
     <ProjectReference Include="..\..\Avalonia.Layout\Avalonia.Layout.csproj" />
     <ProjectReference Include="..\..\Avalonia.Styling\Avalonia.Styling.csproj" />
     <ProjectReference Include="..\..\Avalonia.Visuals\Avalonia.Visuals.csproj" />
+    <ProjectReference Include="..\..\OpenGL\Avalonia.OpenGL\Avalonia.OpenGL.csproj" />
   </ItemGroup>
   <Import Project="$(MSBuildThisFileDirectory)\..\..\..\build\System.Drawing.Common.props" />
 </Project>
