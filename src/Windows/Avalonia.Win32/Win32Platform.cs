@@ -28,7 +28,7 @@ namespace Avalonia
         public static T UseWin32<T>(
             this T builder,
             bool deferredRendering = true,
-            bool useAngle = true) 
+            bool useAngle = true)
                 where T : AppBuilderBase<T>, new()
         {
             return builder.UseWindowingSubsystem(
