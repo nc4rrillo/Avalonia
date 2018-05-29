@@ -123,9 +123,8 @@ namespace Avalonia.Win32
 
         public IRenderer CreateRenderer(IRenderRoot root)
         {
-            var customRenderer = AvaloniaLocator.Current.GetService<Func<IRenderRoot, IRenderer>>();
             var loop = AvaloniaLocator.Current.GetService<IRenderLoop>();
-            return customRenderer != null ? customRenderer(root): (Win32Platform.UseDeferredRendering ?
+            return Win32Platform.UseDeferredRendering ?
                 (IRenderer)new DeferredRenderer(root, loop) :
                 new ImmediateRenderer(root));
         }

@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Runtime.InteropServices;
 
 namespace Avalonia.Win32.EGL
@@ -9,7 +9,7 @@ namespace Avalonia.Win32.EGL
         public const int CONTEXT_CLIENT_VERSION = 0x3098;
         public const int CONTEXT_MINOR_VERSION = 0x30FB;
         public const int NONE = 0x3038;
-        
+
         public const int PBUFFER_BIT = 0x0001;
         public const int WINDOW_BIT = 0x0004;
         public const int PIXMAP_BIT = 0x0002;
