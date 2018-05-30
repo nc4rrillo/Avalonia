@@ -11,7 +11,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Controls.Platform;
-using Avalonia.Gpu;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.OpenGL;
@@ -84,8 +83,7 @@ namespace Avalonia.Win32
                 .Bind<IRenderLoop>().ToConstant(new RenderLoop(60))
                 .Bind<ISystemDialogImpl>().ToSingleton<SystemDialogImpl>()
                 .Bind<IWindowingPlatform>().ToConstant(s_instance)
-                .Bind<IPlatformIconLoader>().ToConstant(s_instance)
-                .Bind<IEGLPlatform>().ToSingleton<EGLPlatform>();
+                .Bind<IPlatformIconLoader>().ToConstant(s_instance);
 
             if (useAngle) {
                 AvaloniaLocator.CurrentMutable

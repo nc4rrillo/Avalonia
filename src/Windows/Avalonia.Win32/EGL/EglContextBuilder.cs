@@ -15,33 +15,31 @@ namespace Avalonia.Win32.EGL
 
     public class EglContextBuilder : IGlContextBuilder
     {
-        private GlRequest request;
-        private GlVersion version;
-
-        private IntPtr display = IntPtr.Zero;
-        private List<string> extensions = new List<string>();
-        private int eglMajor;
-        private int eglMinor;
-        private IntPtr configId;
-        private EglApi eglApi;
+        private readonly IntPtr _display = IntPtr.Zero;
+        private List<string> _extensions = new List<string>();
+        private readonly int _eglMajor;
+        private readonly int _eglMinor;
+        private readonly IntPtr _configId;
+        private readonly EglApi _eglApi;
 
         public EglContextBuilder(GlRequest request)
         {
-            this.display = Natives.GetDisplay((IntPtr)Natives.DEFAULT_DISPLAY);
-            if (display == IntPtr.Zero)
+            _display = EGL.GetDisplay((IntPtr)EGL.DEFAULT_DISPLAY);
+
+            if (_display == IntPtr.Zero)
                 throw new GlContextException("Could not create EGL display object!");
 
-            if (!Natives.Initialize(display, out eglMajor, out eglMinor))
+            if (!EGL.Initialize(_display, out _eglMajor, out _eglMinor))
                 throw new GlContextException("Could not initialize EGL!");
 
             // EGL >= 1.4 lets us query extensions
-            if (this.eglMajor >= 1 && this.eglMinor >= 4)
+            if (_eglMajor >= 1 && _eglMinor >= 4)
             {
-                this.extensions.AddRange(Natives.QueryString(display, Natives.EXTENSIONS).Split(' '));
+                _extensions.AddRange(EGL.QueryString(_display, EGL.EXTENSIONS).Split(' '));
             }
 
-            this.eglApi = EglContextBuilder.BindAPI(this.eglMajor, this.eglMinor, request);
-            this.configId = EglContextBuilder.ChooseFbConfig(this.display, this.eglMajor, this.eglMinor, this.eglApi);
+            _eglApi = BindAPI(_eglMajor, _eglMinor, request);
+            _configId = ChooseFbConfig(_display, _eglMajor, _eglMinor, request, _eglApi);
         }
 
         public IGlContext Build(IEnumerable<object> surfaces)
@@ -53,17 +51,17 @@ namespace Avalonia.Win32.EGL
             // TODO: More surface attributes?
             var attributes = new int[]
             {
-                Natives.NONE
+                EGL.NONE
             };
 
-            var surface = Natives.CreateWindowSurface(this.display, this.configId, hwnd.Handle, attributes);
+            var surface = EGL.CreateWindowSurface(_display, _configId, hwnd.Handle, attributes);
 
             // TODO: Make the GL version configurable
             return new EglContext(
-                this.display,
-                this.configId,
-                new EglSurface(surface, hwnd), 
-                this.CreateContext(3, 0)
+                _display,
+                _configId,
+                new EglSurface(surface, hwnd),
+                CreateContext(3, 0)
             );
         }
 
@@ -75,13 +73,13 @@ namespace Avalonia.Win32.EGL
             //If we have EGL >= 1.4, we can try desktop GL if our GlRequest is set to Auto
             if (eglMajor >= 1 && eglMinor >= 4)
             {
-                if (request == GlRequest.Auto)
+                if (request.Api == GlApi.Auto)
                 {
-                    if (Natives.BindAPI(Natives.OPENGL_API))
+                    if (EGL.BindAPI(EGL.OPENGL_API))
                     {
                         eglApi = EglApi.Gl;
                     }
-                    else if (Natives.BindAPI(Natives.OPENGL_ES_API))
+                    else if (EGL.BindAPI(EGL.OPENGL_ES_API))
                     {
                         eglApi = EglApi.Gles;
                     }
@@ -90,9 +88,9 @@ namespace Avalonia.Win32.EGL
                         throw new GlContextException("Could not find a suitable OpenGL API to bind to!");
                     }
                 }
-                else if (request == GlRequest.Gl)
+                else if (request.Api == GlApi.Gl)
                 {
-                    if (!Natives.BindAPI(Natives.OPENGL_API))
+                    if (!EGL.BindAPI(EGL.OPENGL_API))
                     {
                         throw new GlContextException("Could not find a suitable OpenGL API to bind to!");
                     }
@@ -102,18 +100,18 @@ namespace Avalonia.Win32.EGL
             return eglApi;
         }
 
-        private static IntPtr ChooseFbConfig(IntPtr display, int major, int minor, EglApi api)
+        private static IntPtr ChooseFbConfig(IntPtr display, int major, int minor, GlRequest request, EglApi api)
         {
             var attributes = new List<int>();
 
             if (major >= 1 && minor >= 2)
             {
-                attributes.Add(Natives.COLOR_BUFFER_TYPE);
-                attributes.Add(Natives.RGB_BUFFER);
+                attributes.Add(EGL.COLOR_BUFFER_TYPE);
+                attributes.Add(EGL.RGB_BUFFER);
             }
 
-            attributes.Add(Natives.SURFACE_TYPE);
-            attributes.Add(Natives.WINDOW_BIT);
+            attributes.Add(EGL.SURFACE_TYPE);
+            attributes.Add(EGL.WINDOW_BIT);
 
             // Add the Renderable type and Conformant attributes based on the selected API
             if (api == EglApi.Gles)
@@ -122,14 +120,39 @@ namespace Avalonia.Win32.EGL
                 {
                     throw new GlContextException("No available pixel format!");
                 }
+                
+                if (request.Version == GlVersion.Specific && request.GlMajor == 3)
+                {
+                    attributes.Add(EGL.RENDERABLE_TYPE);
+                    attributes.Add(EGL.OPENGL_ES3_BIT);
 
-                attributes.Add(Natives.RENDERABLE_TYPE);
+                    attributes.Add(EGL.CONFORMANT);
+                    attributes.Add(EGL.OPENGL_ES3_BIT);
+                }
+                else if (request.Version == GlVersion.Specific && request.GlMajor == 2)
+                {
+                    attributes.Add(EGL.RENDERABLE_TYPE);
+                    attributes.Add(EGL.OPENGL_ES2_BIT);
 
-                // TODO: ES2 Bit if we request EGL version 2.0
-                attributes.Add(Natives.OPENGL_ES3_BIT);
+                    attributes.Add(EGL.CONFORMANT);
+                    attributes.Add(EGL.OPENGL_ES2_BIT);
+                }
+                else if (request.Version == GlVersion.Specific && request.GlMajor == 1)
+                {
+                    attributes.Add(EGL.RENDERABLE_TYPE);
+                    attributes.Add(EGL.OPENGL_ES_BIT);
 
-                attributes.Add(Natives.CONFORMANT);
-                attributes.Add(Natives.OPENGL_ES3_BIT);
+                    attributes.Add(EGL.CONFORMANT);
+                    attributes.Add(EGL.OPENGL_ES_BIT);
+                }
+                else
+                {
+                    attributes.Add(EGL.RENDERABLE_TYPE);
+                    attributes.Add(EGL.OPENGL_ES3_BIT);
+
+                    attributes.Add(EGL.CONFORMANT);
+                    attributes.Add(EGL.OPENGL_ES3_BIT);
+                }
             }
             else
             {
@@ -138,38 +161,38 @@ namespace Avalonia.Win32.EGL
                     throw new GlContextException("No available pixel format!");
                 }
 
-                attributes.Add(Natives.RENDERABLE_TYPE);
-                attributes.Add(Natives.OPENGL_BIT);
-                attributes.Add(Natives.CONFORMANT);
-                attributes.Add(Natives.OPENGL_BIT);
+                attributes.Add(EGL.RENDERABLE_TYPE);
+                attributes.Add(EGL.OPENGL_BIT);
+                attributes.Add(EGL.CONFORMANT);
+                attributes.Add(EGL.OPENGL_BIT);
             }
 
             // Use HW acceleration
-            attributes.Add(Natives.CONFIG_CAVEAT);
-            attributes.Add(Natives.NONE);
+            attributes.Add(EGL.CONFIG_CAVEAT);
+            attributes.Add(EGL.NONE);
 
-            attributes.Add(Natives.RED_SIZE);
+            attributes.Add(EGL.RED_SIZE);
             attributes.Add(8);
 
-            attributes.Add(Natives.GREEN_SIZE);
+            attributes.Add(EGL.GREEN_SIZE);
             attributes.Add(8);
 
-            attributes.Add(Natives.BLUE_SIZE);
+            attributes.Add(EGL.BLUE_SIZE);
             attributes.Add(8);
 
-            attributes.Add(Natives.ALPHA_SIZE);
+            attributes.Add(EGL.ALPHA_SIZE);
             attributes.Add(8);
 
-            attributes.Add(Natives.DEPTH_SIZE);
+            attributes.Add(EGL.DEPTH_SIZE);
             attributes.Add(24);
 
-            attributes.Add(Natives.STENCIL_SIZE);
+            attributes.Add(EGL.STENCIL_SIZE);
             attributes.Add(8);
 
-            attributes.Add(Natives.NONE);
+            attributes.Add(EGL.NONE);
 
             var configIds = new IntPtr[1];
-            if (!Natives.ChooseConfig(display, attributes.ToArray(), configIds, 1, out var numConfigs))
+            if (!EGL.ChooseConfig(display, attributes.ToArray(), configIds, 1, out var numConfigs))
             {
                 throw new GlContextException("eglChooseConfig failed!");
             }
@@ -187,24 +210,24 @@ namespace Avalonia.Win32.EGL
             var attributes = new List<int>();
 
             // EGL >= 1.5 or implementations with EGL_KHR_create_context can request a minor version as well
-            if ((this.eglMajor >= 1 && this.eglMinor >= 5) || this.extensions.Contains("EGL_KHR_create_context"))
+            if ((_eglMajor >= 1 && _eglMinor >= 5) || _extensions.Contains("EGL_KHR_create_context"))
             {
-                attributes.Add(Natives.CONTEXT_CLIENT_VERSION);
+                attributes.Add(EGL.CONTEXT_CLIENT_VERSION);
                 attributes.Add(contextMajor);
-                attributes.Add(Natives.CONTEXT_MINOR_VERSION);
+                attributes.Add(EGL.CONTEXT_MINOR_VERSION);
                 attributes.Add(contextMinor);
 
                 // TODO: Robustness
             }
-            else if ((this.eglMajor >= 1 && this.eglMinor >= 3) && this.eglApi == EglApi.Gles)
+            else if ((_eglMajor >= 1 && _eglMinor >= 3) && _eglApi == EglApi.Gles)
             {
-                attributes.Add(Natives.CONTEXT_CLIENT_VERSION);
+                attributes.Add(EGL.CONTEXT_CLIENT_VERSION);
                 attributes.Add(contextMajor);
             }
 
-            attributes.Add(Natives.NONE);
+            attributes.Add(EGL.NONE);
 
-            var context = Natives.CreateContext(this.display, this.configId, (IntPtr)Natives.NO_CONTEXT, attributes.ToArray());
+            var context = EGL.CreateContext(_display, _configId, (IntPtr)EGL.NO_CONTEXT, attributes.ToArray());
             if (context == IntPtr.Zero)
                 throw new GlContextException($"Could not create OpenGL {contextMajor}.{contextMinor} context!");
 

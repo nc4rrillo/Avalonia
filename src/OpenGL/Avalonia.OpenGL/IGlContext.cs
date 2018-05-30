@@ -12,6 +12,9 @@ namespace Avalonia.OpenGL
         /// </summary>
         IGlSurface Surface { get; }
 
+        /// <summary>
+        /// Swaps buffers
+        /// </summary>
         void SwapBuffers();
 
         /// <summary>
@@ -24,6 +27,9 @@ namespace Avalonia.OpenGL
         /// <returns>True if this Context is the current one. False otherwise.</returns>
         bool IsCurrentContext();
 
+        /// <summary>
+        /// Recreates the current surface
+        /// </summary>
         void RecreateSurface();
     }
 }

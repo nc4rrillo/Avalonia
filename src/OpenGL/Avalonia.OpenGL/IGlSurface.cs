@@ -22,11 +22,5 @@ namespace Avalonia.OpenGL
         /// </summary>
         /// <returns>Dpi of a surface</returns> 
         (int x, int y) GetDpi();
-
-        /// <summary> 
-        /// Get framebuffer parameters. 
-        /// </summary> 
-        /// <returns>Framebuffer parameters</returns> 
-        FramebufferParameters GetFramebufferParameters();
     }
 }

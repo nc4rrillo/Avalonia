@@ -4,8 +4,8 @@
 using System;
 using Avalonia.Gpu;
 using Avalonia.Logging;
+using Avalonia.OpenGL;
 using Avalonia.Platform;
-using Avalonia.Skia.Gpu;
 
 namespace Avalonia.Skia
 {
@@ -36,22 +36,17 @@ namespace Avalonia.Skia
         /// <param name="preferredBackendType">Preferred backend type - will fallback to cpu if platform has not support for it.</param>
         public static void Initialize(RenderBackendType preferredBackendType = RenderBackendType.Cpu)
         {
-            IGpuRenderBackend renderBackend = null;
-
             Logger.Information(LogArea.Visual, null, "SkiaRuntime initializing with backend: {backendType}", preferredBackendType);
 
+            IGlContextBuilder contextBuilder = null;
             if (preferredBackendType == RenderBackendType.Gpu)
             {
-                var eglPlatform = AvaloniaLocator.Current.GetService<IEGLPlatform>();
-
-                if (eglPlatform != null)
+                var contextBuilderFactory = AvaloniaLocator.Current.GetService<Func<GlRequest, IGlContextBuilder>>();
+                if (contextBuilder != null)
                 {
                     try
                     {
-                        if (eglPlatform.IsSupported())
-                        {
-                            renderBackend = new EGLRenderBackend(eglPlatform);
-                        }
+                        contextBuilder = contextBuilderFactory(new GlRequest { Api = GlApi.Auto, Version = GlVersion.Latest });
                     }
                     catch (Exception e)
                     {
@@ -60,7 +55,7 @@ namespace Avalonia.Skia
                 }
             }
 
-            var renderInterface = new PlatformRenderInterface(renderBackend);
+            var renderInterface = new PlatformRenderInterface(contextBuilder);
 
             AvaloniaLocator.CurrentMutable
                 .Bind<IPlatformRenderInterface>().ToConstant(renderInterface);

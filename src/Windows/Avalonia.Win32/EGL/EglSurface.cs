@@ -18,6 +18,7 @@ namespace Avalonia.Win32.EGL
             PlatformHandle = platformHandle;
         }
 
+        /// <inheritdoc />
         public (int width, int height) GetSize()
         {
             UnmanagedMethods.GetClientRect(PlatformHandle.Handle, out UnmanagedMethods.RECT clientSize);
@@ -52,18 +53,6 @@ namespace Avalonia.Win32.EGL
             }
 
             return (96, 96);
-        }
-
-        /// <inheritdoc />
-        public FramebufferParameters GetFramebufferParameters()
-        {
-            GL.GetIntegerv(GL.FRAMEBUFFER_BINDING, out int framebufferHandle);
-            return new FramebufferParameters
-            {
-                FramebufferHandle = (IntPtr)framebufferHandle,
-                SampleCount = 0,
-                StencilBits = 0
-            };
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Avalonia.Win32.EGL
 {
-    public static class Natives
+    public static class EGL
     {
         public const int DEFAULT_DISPLAY = 0;
         public const int CONTEXT_CLIENT_VERSION = 0x3098;
@@ -30,6 +30,8 @@ namespace Avalonia.Win32.EGL
         public const int OPENGL_BIT = 0x0008;
         public const int OPENGL_API = 0x30A2;
 
+        public const int OPENGL_ES_BIT = 1;
+        public const int OPENGL_ES2_BIT = 0x0004;
         public const int OPENGL_ES3_BIT = 0x00000040;
         public const int OPENGL_ES_API = 0x30A0;
 

@@ -160,8 +160,7 @@ namespace Avalonia.Skia
                 if (Surface == null)
                 {
                     _bitmap.Dispose();
-
->>>>>>> MC/skia-gpu-clean
+                    
                     throw new Exception(
                         $"Unable to create pixel format shim surface for conversion from {_bitmap.ColorType} to {destinationInfo.ColorType}");
                 }

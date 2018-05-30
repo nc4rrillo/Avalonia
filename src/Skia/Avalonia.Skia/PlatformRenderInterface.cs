@@ -8,7 +8,7 @@ using Avalonia.Controls.Platform.Surfaces;
 using Avalonia.Media;
 using Avalonia.OpenGL;
 using Avalonia.Platform;
-using Avalonia.Skia.Gpu;
+using SkiaSharp;
 
 namespace Avalonia.Skia
 {
@@ -17,21 +17,22 @@ namespace Avalonia.Skia
     /// </summary>
     public class PlatformRenderInterface : IPlatformRenderInterface
     {
-        private readonly IGpuRenderBackend _renderBackend;
+        private readonly IGlContextBuilder _contextBuilder;
+        private IGlContext _context;
 
         /// <summary>
         /// Create new Skia platform render interface using optional Gpu render backend.
         /// </summary>
-        /// <param name="renderBackend"></param>
-        public PlatformRenderInterface(IGpuRenderBackend renderBackend)
+        /// <param name="contextBuilder">The GL context builder. Null if Gpu acceleration is turned off</param>
+        public PlatformRenderInterface(IGlContextBuilder contextBuilder)
         {
-            _renderBackend = renderBackend;
+            _contextBuilder = contextBuilder;
         }
 
         /// <summary>
         /// True, if Gpu backend is present.
         /// </summary>
-        private bool HasGpuSupport => _renderBackend != null;
+        private bool HasGpuSupport => _contextBuilder != null;
 
         /// <inheritdoc />
         public IFormattedTextImpl CreateFormattedText(
@@ -111,15 +112,13 @@ namespace Avalonia.Skia
         {
             foreach (var surface in surfaces)
             {
-                if (true)
+                if (HasGpuSupport)
                 {
-                    var contextBuilder = AvaloniaLocator.Current.GetService<Func<GlRequest, IGlContextBuilder>>();
-                    var context = contextBuilder(GlRequest.Auto).Build(surfaces);
-                    context.MakeCurrent();
+                    _context = _contextBuilder.Build(surfaces);
+                    _context.MakeCurrent();
 
-                    GL.Initialize((name) => context.GetProcAddress(name));
-                    var grContext = GRContext.Create(GRBackend.OpenGL, GRGlInterface.AssembleInterface((o, name) => context.GetProcAddress(name)), GRContextOptions.Default);
-                    return new WindowRenderTarget(context, grContext);
+                    var grContext = GRContext.Create(GRBackend.OpenGL, GRGlInterface.AssembleInterface((o, name) => _context.GetProcAddress(name)), GRContextOptions.Default);
+                    return new WindowRenderTarget(_context, grContext);
                 }
                 else
                 {

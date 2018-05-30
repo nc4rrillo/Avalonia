@@ -9,7 +9,6 @@ using Avalonia.OpenGL;
 using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.Rendering.Utilities;
-using Avalonia.Skia.Gpu;
 using Avalonia.Utilities;
 using SkiaSharp;
 
