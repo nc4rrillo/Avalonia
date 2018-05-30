@@ -6,6 +6,7 @@ using System.Reactive.Disposables;
 using Avalonia.Controls.Platform.Surfaces;
 using Avalonia.Platform;
 using Avalonia.Rendering;
+using Avalonia.Skia.Helpers;
 using SkiaSharp;
 
 namespace Avalonia.Skia
@@ -87,9 +88,9 @@ namespace Avalonia.Skia
             {
                 return;
             }
-
+            
             FreeSurface();
-
+            
             _currentFramebufferAddress = framebuffer.Address;
 
             var surface = SKSurface.Create(desiredImageInfo, _currentFramebufferAddress, framebuffer.RowBytes);
@@ -160,6 +161,7 @@ namespace Avalonia.Skia
                 {
                     _bitmap.Dispose();
 
+>>>>>>> MC/skia-gpu-clean
                     throw new Exception(
                         $"Unable to create pixel format shim surface for conversion from {_bitmap.ColorType} to {destinationInfo.ColorType}");
                 }

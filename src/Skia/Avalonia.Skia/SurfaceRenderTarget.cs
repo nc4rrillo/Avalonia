@@ -1,4 +1,4 @@
-﻿// Copyright (c) The Avalonia Project. All rights reserved.
+// Copyright (c) The Avalonia Project. All rights reserved.
 // Licensed under the MIT license. See licence.md file in the project root for full license information.
 
 using System;
@@ -34,11 +34,8 @@ namespace Avalonia.Skia
             _dpi = createInfo.Dpi;
             _renderContext = createInfo.RenderContext;
             _disableLcdRendering = createInfo.DisableTextLcdRendering;
-            _renderContext = createInfo.RenderContext;
             _grContext = createInfo.GrContext;
-
             _surface = CreateSurface(PixelWidth, PixelHeight, createInfo.Format, _renderContext, createInfo.GrContext);
-
             _canvas = _surface?.Canvas;
 
             if (_surface == null || _canvas == null)
@@ -76,7 +73,6 @@ namespace Avalonia.Skia
         {
             _canvas.RestoreToCount(-1);
             _canvas.ResetMatrix();
-
             _renderContext?.MakeCurrent();
 
             var createInfo = new DrawingContextImpl.CreateInfo
@@ -174,10 +170,13 @@ namespace Avalonia.Skia
             public PixelFormat? Format;
 
             /// <summary>
-            /// Optional render context, when passed surface will use Gpu acceleration.
+            /// Optional GL render context, when passed surface will use Gpu acceleration.
             /// </summary>
             public IGlContext RenderContext;
-
+            
+            /// <summary>
+            /// Optional GR render context, when passed surface will use Gpu acceleration.
+            /// </summary>
             public GRContext GrContext;
 
             /// <summary>

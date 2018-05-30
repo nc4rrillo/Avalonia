@@ -18,4 +18,5 @@
     <ProjectReference Include="..\..\OpenGL\Avalonia.OpenGL\Avalonia.OpenGL.csproj" />
   </ItemGroup>
   <Import Project="$(MSBuildThisFileDirectory)\..\..\..\build\System.Drawing.Common.props" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\..\..\build\Avalonia.Win32.Natives.props" />
 </Project>

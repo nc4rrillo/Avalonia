@@ -1,22 +1,39 @@
+// Copyright (c) The Avalonia Project. All rights reserved.
+// Licensed under the MIT license. See licence.md file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Avalonia.Controls.Platform.Surfaces;
 using Avalonia.Media;
 using Avalonia.OpenGL;
 using Avalonia.Platform;
-using SkiaSharp;
+using Avalonia.Skia.Gpu;
 
 namespace Avalonia.Skia
 {
-    public partial class PlatformRenderInterface : IPlatformRenderInterface
+    /// <summary>
+    /// Skia platform render interface.
+    /// </summary>
+    public class PlatformRenderInterface : IPlatformRenderInterface
     {
-        public IBitmapImpl CreateBitmap(int width, int height)
+        private readonly IGpuRenderBackend _renderBackend;
+
+        /// <summary>
+        /// Create new Skia platform render interface using optional Gpu render backend.
+        /// </summary>
+        /// <param name="renderBackend"></param>
+        public PlatformRenderInterface(IGpuRenderBackend renderBackend)
         {
-            return CreateRenderTargetBitmap(width, height, 96, 96);
+            _renderBackend = renderBackend;
         }
 
+        /// <summary>
+        /// True, if Gpu backend is present.
+        /// </summary>
+        private bool HasGpuSupport => _renderBackend != null;
+
+        /// <inheritdoc />
         public IFormattedTextImpl CreateFormattedText(
             string text,
             Typeface typeface,
@@ -28,6 +45,7 @@ namespace Avalonia.Skia
             return new FormattedTextImpl(text, typeface, textAlignment, wrapping, constraint, spans);
         }
 
+        /// <inheritdoc />
         public IStreamGeometryImpl CreateStreamGeometry()
         {
             return new StreamGeometryImpl();
@@ -88,6 +106,7 @@ namespace Avalonia.Skia
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public virtual IRenderTarget CreateRenderTarget(IEnumerable<object> surfaces)
         {
             foreach (var surface in surfaces)
@@ -114,6 +133,7 @@ namespace Avalonia.Skia
             throw new NotSupportedException("Don't know how to create a Skia render target from any of provided surfaces");
         }
 
+        /// <inheritdoc />
         public IWriteableBitmapImpl CreateWriteableBitmap(int width, int height, PixelFormat? format = null)
         {
             return new WriteableBitmapImpl(width, height, format);

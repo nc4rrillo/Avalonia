@@ -1,11 +1,13 @@
-﻿using Avalonia.OpenGL;
+// Copyright (c) The Avalonia Project. All rights reserved.
+// Licensed under the MIT license. See licence.md file in the project root for full license information.
+
+using System;
+using Avalonia.OpenGL;
 using Avalonia.Platform;
 using Avalonia.Rendering;
+using Avalonia.Skia.Gpu;
+using Avalonia.Skia.Helpers;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Reactive.Disposables;
-using System.Text;
 
 namespace Avalonia.Skia
 {
@@ -34,10 +36,6 @@ namespace Avalonia.Skia
 
         private GRBackendRenderTargetDesc CreateInitialRenderTargetDesc()
         {
-            _renderContext.MakeCurrent();
-
-            var framebufferDesc = _renderContext.Surface.GetFramebufferParameters();
-
             var pixelConfig = SKImageInfo.PlatformColorType == SKColorType.Bgra8888
                 ? GRPixelConfig.Bgra8888
                 : GRPixelConfig.Rgba8888;
@@ -81,7 +79,6 @@ namespace Avalonia.Skia
         private void CreateSurface()
         {
             var (newWidth, newHeight) = _renderContext.Surface.GetSize();
-
             var (newDpiWidth, newDpiHeight) =_renderContext.Surface.GetDpi();
             var newDpi = new Size(newDpiWidth, newDpiHeight);
 
@@ -96,7 +93,6 @@ namespace Avalonia.Skia
                 _rtDesc.Width = newWidth;
                 _rtDesc.Height = newHeight;
                 _surfaceDpi = newDpi;
-
                 _surface = SKSurface.Create(_grContext, _rtDesc);
 
                 _canvas = _surface?.Canvas;
@@ -112,9 +108,7 @@ namespace Avalonia.Skia
         public IDrawingContextImpl CreateDrawingContext(IVisualBrushRenderer visualBrushRenderer)
         {
             _renderContext.MakeCurrent();
-
             CreateSurface();
-
             _canvas.RestoreToCount(-1);
             _canvas.ResetMatrix();
 
@@ -132,3 +126,4 @@ namespace Avalonia.Skia
     }
 
 }
+
