@@ -67,7 +67,7 @@ namespace Avalonia.Direct2D1.RenderTests.Media
         
         [Theory]
         [InlineData(PixelFormat.Rgba8888), InlineData(PixelFormat.Bgra8888),
-#if AVALONIA_SKIA
+#if SKIA
              InlineData(PixelFormat.Rgb565)
 #endif
             ]
