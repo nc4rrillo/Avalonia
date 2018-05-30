@@ -19,9 +19,9 @@ namespace Avalonia
         /// <param name="builder">Builder.</param>
         /// <param name="preferredBackendType">Preferred backend type.</param>
         /// <returns>Configure builder.</returns>
-        public static T UseSkia<T>(this T builder, RenderBackendType preferredBackendType = RenderBackendType.Cpu) where T : AppBuilderBase<T>, new()
+        public static T UseSkia<T>(this T builder) where T : AppBuilderBase<T>, new()
         {
-            builder.UseRenderingSubsystem(() => SkiaPlatform.Initialize(preferredBackendType), "Skia");
+            builder.UseRenderingSubsystem(() => SkiaPlatform.Initialize(), "Skia");
             return builder;
         }
     }

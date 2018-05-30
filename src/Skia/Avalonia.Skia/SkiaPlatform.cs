@@ -5,18 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Rendering;
 
-namespace Avalonia
-{
-    public static class SkiaApplicationExtensions
-    {
-        public static T UseSkia<T>(this T builder) where T : AppBuilderBase<T>, new()
-        {
-            builder.UseRenderingSubsystem(Skia.SkiaPlatform.Initialize, "Skia");
-            return builder;
-        }
-    }
-}
-
 namespace Avalonia.Skia
 {
     public static class SkiaPlatform
