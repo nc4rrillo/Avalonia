@@ -5,8 +5,6 @@
     <AssemblyName>Avalonia.Skia</AssemblyName>
     <IncludeLinuxSkia>true</IncludeLinuxSkia>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Avalonia.Base\Avalonia.Base.csproj" />
@@ -16,7 +14,6 @@
     <ProjectReference Include="..\..\Avalonia.Layout\Avalonia.Layout.csproj" />
     <ProjectReference Include="..\..\Avalonia.Styling\Avalonia.Styling.csproj" />
     <ProjectReference Include="..\..\Avalonia.Visuals\Avalonia.Visuals.csproj" />
-    <ProjectReference Include="..\..\OpenGL\Avalonia.OpenGL\Avalonia.OpenGL.csproj" />
   </ItemGroup>
   
   <Import Project="..\..\..\build\SkiaSharp.props" />
